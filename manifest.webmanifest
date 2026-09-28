@@ -1,0 +1,11 @@
+{
+  "name": "乾杯牌局",
+  "short_name": "乾杯牌局",
+  "description": "朋友聚會時，用一支手機就能玩的酒桌撲克牌。",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#edf3f5",
+  "theme_color": "#d7e8f5",
+  "icons": []
+}

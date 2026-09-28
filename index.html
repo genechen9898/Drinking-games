@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#d7e8f5" />
+    <meta name="description" content="朋友聚會時，用一支手機就能玩的酒桌撲克牌。" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23d7e8f5'/%3E%3Crect x='18' y='11' width='30' height='42' rx='6' fill='%23fff' stroke='%233c5568' stroke-width='3'/%3E%3Cpath d='M33 24c-5-7-13 0 0 11 13-11 5-18 0-11Z' fill='%23dc6f75'/%3E%3C/svg%3E" />
+    <title>乾杯牌局</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">CHEERS DECK</p>
+          <h1>乾杯牌局</h1>
+        </div>
+        <div class="header-actions">
+          <button class="manage-players-button" id="openPlayers" type="button"><span aria-hidden="true">♙</span> 調整玩家</button>
+          <button class="icon-button" id="openRules" type="button" aria-label="查看所有規則" title="查看規則"><span aria-hidden="true">?</span></button>
+        </div>
+      </header>
+
+      <section class="effects-panel" aria-labelledby="effectsTitle">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">本局持續生效</p>
+            <h2 id="effectsTitle">場上效果</h2>
+          </div>
+          <span class="effect-count" id="effectCount">0</span>
+        </div>
+        <div class="effects-list" id="effectsList" aria-live="polite">
+          <p class="empty-effects">尚未出現照相機、摸鼻子或神經病</p>
+        </div>
+      </section>
+
+      <section class="game-table" aria-label="抽牌區">
+        <div class="turn-banner">
+          <span>輪到</span>
+          <strong id="currentPlayer">玩家 1</strong>
+          <small>把手機交給這位玩家</small>
+        </div>
+        <div class="deck-stats">
+          <div>
+            <span class="stat-label">剩餘</span>
+            <strong><span id="remainingCount">52</span><small> 張</small></strong>
+          </div>
+          <div class="progress-track" aria-hidden="true"><span id="deckProgress"></span></div>
+          <div class="round-stat">
+            <span class="stat-label">已抽</span>
+            <strong id="drawnCount">0</strong>
+          </div>
+        </div>
+
+        <div class="card-stage" id="cardStage">
+          <button class="playing-card card-back" id="cardButton" type="button" aria-label="抽一張牌">
+            <span class="back-mark">♢</span>
+            <span class="back-title">CHEERS</span>
+            <span class="back-hint">點一下抽牌</span>
+          </button>
+        </div>
+
+        <div class="rule-card" id="ruleCard" aria-live="polite">
+          <p class="rule-overline" id="ruleOverline">準備好了嗎？</p>
+          <h2 id="ruleName">輪流拿起手機抽牌</h2>
+          <p id="ruleDescription">抽到牌後，照著畫面上的規則玩。</p>
+        </div>
+
+        <button class="draw-button" id="drawButton" type="button">
+          <span>抽一張牌</span>
+          <span aria-hidden="true">→</span>
+        </button>
+      </section>
+
+      <section class="status-grid" aria-label="牌局進度">
+        <article>
+          <span>陪酒小姐</span>
+          <strong id="ladyCount">尚未出現</strong>
+        </article>
+        <article>
+          <span>國王 K</span>
+          <strong id="kingCount">0 / 4</strong>
+        </article>
+      </section>
+
+      <section class="players-section" aria-labelledby="playersTitle">
+        <div class="section-heading compact">
+          <h2 id="playersTitle">玩家順序</h2>
+          <span class="round-label" id="roundLabel">第 1 輪</span>
+        </div>
+        <div class="players-strip" id="playersStrip"></div>
+      </section>
+
+      <section class="history-section" aria-label="最近抽牌">
+        <details class="history-details" id="historyDetails">
+          <summary>
+            <span><strong>最近抽牌</strong><small id="historySummary">尚無紀錄</small></span>
+            <span class="summary-toggle" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="history-toolbar">
+            <span>最多顯示最近 6 張</span>
+            <button class="text-button" id="resetButton" type="button">重新洗牌</button>
+          </div>
+          <div class="history-list" id="historyList">
+            <p class="empty-history">第一張牌會出現在這裡</p>
+          </div>
+        </details>
+      </section>
+
+      <footer>
+        <p>理性飲酒，量力而為。也可以用水或飲料一起玩。</p>
+      </footer>
+    </main>
+
+    <dialog id="setupDialog" class="setup-dialog">
+      <div class="setup-intro">
+        <p class="eyebrow">CHEERS DECK</p>
+        <h2 id="setupTitle">今晚有幾位玩家？</h2>
+        <p id="setupDescription">輸入名字後，牌面會記住每張牌是誰抽的。</p>
+      </div>
+      <label class="player-count-label" for="playerCount">玩家人數</label>
+      <div class="count-stepper">
+        <button id="decreasePlayers" type="button" aria-label="減少一位玩家">−</button>
+        <strong id="playerCountDisplay">4</strong>
+        <button id="increasePlayers" type="button" aria-label="增加一位玩家">＋</button>
+      </div>
+      <input id="playerCount" type="hidden" value="4" />
+      <div class="player-inputs" id="playerInputs"></div>
+      <p class="reorder-hint" id="reorderHint">使用上下箭頭調整抽牌順序。</p>
+      <button class="draw-button setup-start" id="startGame" type="button"><span>開始牌局</span><span aria-hidden="true">→</span></button>
+      <button class="text-button setup-cancel" id="cancelPlayerEdit" type="button" hidden>保留原本玩家</button>
+    </dialog>
+
+    <dialog id="rulesDialog" class="modal">
+      <div class="modal-head">
+        <div>
+          <p class="section-kicker">52 張牌的玩法</p>
+          <h2>遊戲規則</h2>
+        </div>
+        <button class="close-button" id="closeRules" type="button" aria-label="關閉規則">×</button>
+      </div>
+      <div class="rules-list" id="rulesList"></div>
+      <p class="modal-note">每桌習慣可能不同，開始前可以先一起確認玩法。</p>
+    </dialog>
+
+    <dialog id="resetDialog" class="confirm-dialog">
+      <h2>要重新洗牌嗎？</h2>
+      <p>目前進度、K 的數量與所有場上效果都會清除。</p>
+      <div class="dialog-actions">
+        <button class="secondary-button" id="cancelReset" type="button">先不要</button>
+        <button class="danger-button" id="confirmReset" type="button">重新開始</button>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
