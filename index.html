@@ -19,6 +19,7 @@
         </div>
         <div class="header-actions">
           <button class="manage-players-button" id="openPlayers" type="button"><span aria-hidden="true">♙</span> 調整玩家</button>
+          <button class="reset-top-button" id="resetButton" type="button"><span aria-hidden="true">↻</span> 重新洗牌</button>
           <button class="icon-button" id="openRules" type="button" aria-label="查看所有規則" title="查看規則"><span aria-hidden="true">?</span></button>
         </div>
       </header>
@@ -26,13 +27,13 @@
       <section class="effects-panel" aria-labelledby="effectsTitle">
         <div class="section-heading">
           <div>
-            <p class="section-kicker">本局持續生效</p>
-            <h2 id="effectsTitle">場上效果</h2>
+          <p class="section-kicker">依玩家整理</p>
+            <h2 id="effectsTitle">未使用功能牌</h2>
           </div>
           <span class="effect-count" id="effectCount">0</span>
         </div>
         <div class="effects-list" id="effectsList" aria-live="polite">
-          <p class="empty-effects">尚未出現照相機、摸鼻子或神經病</p>
+            <p class="empty-effects">目前沒有未使用的功能牌</p>
         </div>
       </section>
 
@@ -60,6 +61,7 @@
             <span class="back-title">CHEERS</span>
             <span class="back-hint">點一下抽牌</span>
           </button>
+          <p class="fullscreen-tip" id="fullscreenTip" hidden>雙擊牌面可放大</p>
         </div>
 
         <div class="rule-card" id="ruleCard" aria-live="polite">
@@ -101,7 +103,6 @@
           </summary>
           <div class="history-toolbar">
             <span>最多顯示最近 6 張</span>
-            <button class="text-button" id="resetButton" type="button">重新洗牌</button>
           </div>
           <div class="history-list" id="historyList">
             <p class="empty-history">第一張牌會出現在這裡</p>
@@ -153,6 +154,17 @@
         <button class="danger-button" id="confirmReset" type="button">重新開始</button>
       </div>
     </dialog>
+
+    <div class="fullscreen-card-view" id="fullscreenCardView" role="dialog" aria-modal="true" aria-label="全螢幕牌面" hidden>
+      <button class="fullscreen-close" id="closeFullscreenCard" type="button" aria-label="關閉全螢幕牌面">×</button>
+      <div class="fullscreen-card-wrap" id="fullscreenCard"></div>
+      <div class="fullscreen-rule">
+        <p class="rule-overline" id="fullscreenRuleOverline"></p>
+        <h2 id="fullscreenRuleName"></h2>
+        <p id="fullscreenRuleDescription"></p>
+      </div>
+      <p class="fullscreen-exit-hint">點一下牌面抽下一張・按 × 返回</p>
+    </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="app.js"></script>

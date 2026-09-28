@@ -6,14 +6,14 @@ const SUITS = [
 ];
 
 const RULES = {
-  A: { name: "免死金牌", description: "保留這次資格，之後可抵銷一次喝酒。使用後就失效。" },
+  A: { name: "免死金牌", description: "保留這次資格，之後可抵銷一次喝酒。使用後就失效。", persistent: true },
   2: { name: "陪酒小姐", description: "指定一位陪酒小姐；任何人喝酒時她都要陪喝，直到下一張 2 出現。" },
   3: { name: "PASS", description: "安全過關，這一輪不用喝。" },
   4: { name: "自己喝", description: "抽到這張牌的人喝一口。" },
   5: { name: "照相機", description: "可在任意時刻喊「照相機」讓大家定格；最後停下來的人喝。使用後取消。", persistent: true },
   6: { name: "划拳", description: "指定一位玩家划拳，輸的人喝一口。" },
   7: { name: "團康遊戲", description: "抽牌者發起一個大家都能參加的小遊戲，由輸家喝。" },
-  8: { name: "廁所", description: "獲得一次離席上廁所的資格。" },
+  8: { name: "廁所", description: "獲得一次離席上廁所的資格。", persistent: true },
   9: { name: "摸鼻子", description: "可在任意時刻偷偷摸鼻子；最後跟著摸鼻子的人喝。使用後取消。", persistent: true },
   10: { name: "神經病", description: "其他人不能回答抽牌者的問題；不小心回答的人喝。使用後取消。", persistent: true },
   J: { name: "左邊喝", description: "抽牌者左手邊的玩家喝一口。" },
@@ -50,6 +50,12 @@ const ui = {
   playersStrip: document.querySelector("#playersStrip"),
   roundLabel: document.querySelector("#roundLabel"),
   historySummary: document.querySelector("#historySummary"),
+  fullscreenTip: document.querySelector("#fullscreenTip"),
+  fullscreenCardView: document.querySelector("#fullscreenCardView"),
+  fullscreenCard: document.querySelector("#fullscreenCard"),
+  fullscreenRuleOverline: document.querySelector("#fullscreenRuleOverline"),
+  fullscreenRuleName: document.querySelector("#fullscreenRuleName"),
+  fullscreenRuleDescription: document.querySelector("#fullscreenRuleDescription"),
 };
 
 function createDeck() {
@@ -111,33 +117,73 @@ function getDisplayRule(card) {
   return { overline: `${owner}・${card.suitName} ${card.rank}`, name: base.name, description: base.description };
 }
 
+function getCardFaceHTML(card) {
+  return `
+    <span class="card-corner"><span class="card-rank">${card.rank}</span><span class="card-suit">${card.suit}</span></span>
+    <span class="card-center"><span>${card.suit}<small>${RULES[card.rank].name}</small></span></span>
+    <span class="card-corner bottom"><span class="card-rank">${card.rank}</span><span class="card-suit">${card.suit}</span></span>`;
+}
+
 function renderCard(card, animate = false) {
   if (!card) {
     ui.cardButton.className = "playing-card card-back";
     ui.cardButton.innerHTML = '<span class="back-mark">♢</span><span class="back-title">CHEERS</span><span class="back-hint">點一下抽牌</span>';
     ui.cardButton.setAttribute("aria-label", "抽一張牌");
+    ui.fullscreenTip.hidden = true;
     return;
   }
   ui.cardButton.className = `playing-card card-face ${card.color}${animate ? " draw-in" : ""}`;
-  ui.cardButton.innerHTML = `
-    <span class="card-corner"><span class="card-rank">${card.rank}</span><span class="card-suit">${card.suit}</span></span>
-    <span class="card-center"><span>${card.suit}<small>${RULES[card.rank].name}</small></span></span>
-    <span class="card-corner bottom"><span class="card-rank">${card.rank}</span><span class="card-suit">${card.suit}</span></span>`;
+  ui.cardButton.innerHTML = getCardFaceHTML(card);
   ui.cardButton.setAttribute("aria-label", `${card.suitName}${card.rank}，${RULES[card.rank].name}`);
+  ui.fullscreenTip.hidden = false;
   if (animate) setTimeout(() => ui.cardButton.classList.remove("draw-in"), 500);
+}
+
+function openFullscreenCard() {
+  if (!state.current) return;
+  const display = getDisplayRule(state.current);
+  ui.fullscreenCard.innerHTML = `<div class="playing-card card-face ${state.current.color} fullscreen-display-card">${getCardFaceHTML(state.current)}</div>`;
+  ui.fullscreenRuleOverline.textContent = display.overline;
+  ui.fullscreenRuleName.textContent = display.name;
+  ui.fullscreenRuleDescription.textContent = display.description;
+  ui.fullscreenCardView.hidden = false;
+  document.body.classList.add("fullscreen-open");
+  document.querySelector("#closeFullscreenCard").focus();
+}
+
+function closeFullscreenCard() {
+  ui.fullscreenCardView.hidden = true;
+  document.body.classList.remove("fullscreen-open");
 }
 
 function renderEffects() {
   ui.effectCount.textContent = state.effects.length;
   if (!state.effects.length) {
-    ui.effectsList.innerHTML = '<p class="empty-effects">尚未出現照相機、摸鼻子或神經病</p>';
+    ui.effectsList.innerHTML = '<p class="empty-effects">目前沒有未使用的功能牌</p>';
     return;
   }
-  ui.effectsList.innerHTML = state.effects.map((effect) => `
-    <div class="effect-chip">
-      <div><strong>${effect.icon} ${effect.name}</strong><small>${effect.playerName} 持有・${effect.suitName}${effect.rank}</small></div>
-      <button class="use-effect" type="button" data-effect-id="${effect.id}">${effect.playerName} 用掉</button>
-    </div>`).join("");
+  const activeOwners = [...new Set(state.effects.map((effect) => effect.playerName))];
+  const players = [
+    ...state.players.filter((name) => activeOwners.includes(name)),
+    ...activeOwners.filter((name) => !state.players.includes(name)),
+  ];
+  ui.effectsList.innerHTML = players.map((playerName) => {
+    const effects = state.effects.filter((effect) => effect.playerName === playerName);
+    return `
+      <div class="player-effects-row has-effects">
+        <div class="player-effect-owner">
+          <span class="player-avatar">${escapeHTML(playerName).slice(0, 1)}</span>
+          <div><strong>${escapeHTML(playerName)}</strong><small>${effects.length} 張功能牌未使用</small></div>
+        </div>
+        <div class="player-effect-cards">
+          ${effects.map((effect) => `
+            <div class="effect-chip">
+              <div><strong>${effect.icon} ${effect.name}</strong><small>${effect.suitName}${effect.rank}</small></div>
+              <button class="use-effect" type="button" data-effect-id="${effect.id}">用掉</button>
+            </div>`).join("")}
+        </div>
+      </div>`;
+  }).join("");
 }
 
 function renderHistory() {
@@ -193,8 +239,9 @@ function showToast(message) {
   toastTimer = setTimeout(() => ui.toast.classList.remove("show"), 2200);
 }
 
-function drawCard() {
+function drawCard(keepFullscreen = false) {
   if (!state.deck.length) return;
+  const fullscreenWasOpen = !ui.fullscreenCardView.hidden;
   const card = state.deck.pop();
   card.playerName = state.players[state.currentPlayerIndex] || `玩家 ${state.currentPlayerIndex + 1}`;
   state.current = card;
@@ -203,7 +250,7 @@ function drawCard() {
 
   const rule = RULES[card.rank];
   if (rule.persistent) {
-    const icon = card.rank === "5" ? "📷" : card.rank === "9" ? "👃" : "🌀";
+    const icon = card.rank === "A" ? "🛡️" : card.rank === "5" ? "📷" : card.rank === "8" ? "🚻" : card.rank === "9" ? "👃" : "🌀";
     state.effects.push({ id: `${card.id}-${Date.now()}`, rank: card.rank, suitName: card.suitName, name: rule.name, icon, playerName: card.playerName });
   }
 
@@ -212,6 +259,7 @@ function drawCard() {
   if (state.players.length) state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
   saveState();
   render(true);
+  if (keepFullscreen && fullscreenWasOpen) openFullscreenCard();
   if (navigator.vibrate) navigator.vibrate(35);
 }
 
@@ -271,8 +319,38 @@ function populateRules() {
     </div>`).join("");
 }
 
-ui.drawButton.addEventListener("click", drawCard);
-ui.cardButton.addEventListener("click", drawCard);
+ui.drawButton.addEventListener("click", () => drawCard());
+ui.cardButton.addEventListener("click", () => {
+  if (!state.current) drawCard();
+});
+ui.cardButton.addEventListener("dblclick", (event) => {
+  if (!state.current) return;
+  event.preventDefault();
+  openFullscreenCard();
+});
+let lastTouchTap = 0;
+ui.cardButton.addEventListener("pointerup", (event) => {
+  if (event.pointerType !== "touch" || !state.current) return;
+  const now = Date.now();
+  if (now - lastTouchTap < 380) {
+    event.preventDefault();
+    lastTouchTap = 0;
+    openFullscreenCard();
+  } else {
+    lastTouchTap = now;
+  }
+});
+document.querySelector("#closeFullscreenCard").addEventListener("click", closeFullscreenCard);
+let fullscreenDrawLocked = false;
+ui.fullscreenCard.addEventListener("click", () => {
+  if (fullscreenDrawLocked) return;
+  fullscreenDrawLocked = true;
+  drawCard(true);
+  setTimeout(() => { fullscreenDrawLocked = false; }, 420);
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !ui.fullscreenCardView.hidden) closeFullscreenCard();
+});
 document.querySelector("#openRules").addEventListener("click", () => ui.rulesDialog.showModal());
 document.querySelector("#closeRules").addEventListener("click", () => ui.rulesDialog.close());
 document.querySelector("#resetButton").addEventListener("click", () => ui.resetDialog.showModal());
