@@ -320,21 +320,52 @@ function populateRules() {
 }
 
 ui.drawButton.addEventListener("click", () => drawCard());
+let cardClickTimer = null;
+let lastTouchTap = 0;
+let suppressNextCardClick = false;
+
+// 單擊牌面：抽下一張牌
 ui.cardButton.addEventListener("click", () => {
-  if (!state.current) drawCard();
+  // 手機雙擊時，避免第二次 click 又抽一張
+  if (suppressNextCardClick) {
+    suppressNextCardClick = false;
+    return;
+  }
+
+  clearTimeout(cardClickTimer);
+
+  // 稍微等待，以便判斷使用者是單擊還是雙擊
+  cardClickTimer = setTimeout(() => {
+    lastTouchTap = 0;
+    drawCard();
+  }, 260);
 });
+
+// 電腦雙擊牌面：開啟全螢幕
 ui.cardButton.addEventListener("dblclick", (event) => {
-  if (!state.current) return;
   event.preventDefault();
+  clearTimeout(cardClickTimer);
+
+  // 還沒抽第一張牌時，雙擊只抽牌
+  if (!state.current) {
+    drawCard();
+    return;
+  }
+
   openFullscreenCard();
 });
-let lastTouchTap = 0;
+
+// 手機快速點兩下：開啟全螢幕
 ui.cardButton.addEventListener("pointerup", (event) => {
   if (event.pointerType !== "touch" || !state.current) return;
+
   const now = Date.now();
+
   if (now - lastTouchTap < 380) {
     event.preventDefault();
+    clearTimeout(cardClickTimer);
     lastTouchTap = 0;
+    suppressNextCardClick = true;
     openFullscreenCard();
   } else {
     lastTouchTap = now;
