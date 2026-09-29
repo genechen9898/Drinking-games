@@ -10,7 +10,7 @@ const RULES = {
   2: { name: "陪酒小姐", description: "指定一位陪酒小姐；任何人喝酒時她都要陪喝，直到下一張 2 出現。" },
   3: { name: "PASS", description: "安全過關，這一輪不用喝。" },
   4: { name: "自己喝", description: "抽到這張牌的人喝一口。" },
-  5: { name: "照相機", description: "可在任意時刻喊「照相機」讓大家定格；最後停下來的人喝。使用後取消。", persistent: true },
+  5: { name: "照相機", description: "可在任意時候比「照相機」，最後比照相機的人喝。使用後取消。", persistent: true },
   6: { name: "划拳", description: "指定一位玩家划拳，輸的人喝一口。" },
   7: { name: "團康遊戲", description: "抽牌者發起一個大家都能參加的小遊戲，由輸家喝。" },
   8: { name: "廁所", description: "獲得一次離席上廁所的資格。", persistent: true },
