@@ -18,7 +18,7 @@ const RULES = {
   10: { name: "神經病", description: "其他人不能回答抽牌者的問題；不小心回答的人喝。使用後取消。", persistent: true },
   J: { name: "左邊喝", description: "抽牌者左手邊的玩家喝一口。" },
   Q: { name: "右邊喝", description: "抽牌者右手邊的玩家喝一口。" },
-  K: { name: "累積國王杯", description: "前 3 張 K 各倒一些飲料進國王杯；第 4 張 K 的人喝完。" },
+  K: { name: "國王杯", description: "前 3 張 K 各倒一些飲料進國王杯；第 4 張 K 的人喝完。" },
 };
 
 const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
@@ -104,13 +104,17 @@ function getDisplayRule(card) {
   const base = RULES[card.rank];
   const owner = card.playerName ? `${card.playerName} 抽到` : "";
   if (card.rank === "K") {
-    const isFourth = state.kingCount === 4;
-    return {
-      overline: `${owner}・第 ${state.kingCount} 張 K`,
-      name: isFourth ? "國王降臨・喝完國王杯" : "累積國王杯",
-      description: isFourth ? "你抽到第 4 張 K，請喝完累積的國王杯。" : `這是第 ${state.kingCount} 張 K，倒一些飲料進國王杯。`,
-    };
-  }
+  const kingNumber = card.kingNumber || state.kingCount;
+  const isFourth = kingNumber === 4;
+
+  return {
+    overline: `${owner}・第 ${kingNumber} 張 K`,
+    name: isFourth ? "乾杯!!" : "國王杯",
+    description: isFourth
+      ? "你抽到第 4 張 K，請喝完累積的國王杯！"
+      : `這是第 ${kingNumber} 張 K，倒一些飲料進國王杯。`,
+  };
+}
   if (card.rank === "2") {
     return { overline: `${owner}・第 ${state.ladyCount} 位陪酒小姐`, name: base.name, description: base.description };
   }
@@ -118,12 +122,46 @@ function getDisplayRule(card) {
 }
 
 function getCardFaceHTML(card) {
-  return `
-    <span class="card-corner"><span class="card-rank">${card.rank}</span><span class="card-suit">${card.suit}</span></span>
-    <span class="card-center"><span>${card.suit}<small>${RULES[card.rank].name}</small></span></span>
-    <span class="card-corner bottom"><span class="card-rank">${card.rank}</span><span class="card-suit">${card.suit}</span></span>`;
-}
+  const isFourthKing =
+    card.rank === "K" &&
+    (card.kingNumber === 4 || (!card.kingNumber && state.kingCount === 4));
 
+  if (isFourthKing) {
+    return `
+      <span class="card-corner">
+        <span class="card-rank">K</span>
+        <span class="card-suit">${card.suit}</span>
+      </span>
+
+      <span class="king-cheers">
+        <strong>乾杯!!</strong>
+        <small>喝完國王杯</small>
+      </span>
+
+      <span class="card-corner bottom">
+        <span class="card-rank">K</span>
+        <span class="card-suit">${card.suit}</span>
+      </span>`;
+  }
+
+  return `
+    <span class="card-corner">
+      <span class="card-rank">${card.rank}</span>
+      <span class="card-suit">${card.suit}</span>
+    </span>
+
+    <span class="card-center">
+      <span class="card-center-content">
+        <span class="card-center-suit">${card.suit}</span>
+        <small>${RULES[card.rank].name}</small>
+      </span>
+    </span>
+
+    <span class="card-corner bottom">
+      <span class="card-rank">${card.rank}</span>
+      <span class="card-suit">${card.suit}</span>
+    </span>`;
+}
 function renderCard(card, animate = false) {
   if (!card) {
     ui.cardButton.className = "playing-card card-back";
@@ -132,7 +170,14 @@ function renderCard(card, animate = false) {
     ui.fullscreenTip.hidden = true;
     return;
   }
-  ui.cardButton.className = `playing-card card-face ${card.color}${animate ? " draw-in" : ""}`;
+  const fourthKingClass =
+  card.rank === "K" &&
+  (card.kingNumber === 4 || (!card.kingNumber && state.kingCount === 4))
+    ? " fourth-king"
+    : "";
+
+ui.cardButton.className =
+  `playing-card card-face ${card.color}${fourthKingClass}${animate ? " draw-in" : ""}`;
   ui.cardButton.innerHTML = getCardFaceHTML(card);
   ui.cardButton.setAttribute("aria-label", `${card.suitName}${card.rank}，${RULES[card.rank].name}`);
   ui.fullscreenTip.hidden = false;
@@ -142,7 +187,17 @@ function renderCard(card, animate = false) {
 function openFullscreenCard() {
   if (!state.current) return;
   const display = getDisplayRule(state.current);
-  ui.fullscreenCard.innerHTML = `<div class="playing-card card-face ${state.current.color} fullscreen-display-card">${getCardFaceHTML(state.current)}</div>`;
+  const fourthKingClass =
+  state.current.rank === "K" &&
+  (state.current.kingNumber === 4 ||
+    (!state.current.kingNumber && state.kingCount === 4))
+    ? " fourth-king"
+    : "";
+
+ui.fullscreenCard.innerHTML = `
+  <div class="playing-card card-face ${state.current.color}${fourthKingClass} fullscreen-display-card">
+    ${getCardFaceHTML(state.current)}
+  </div>`;
   ui.fullscreenRuleOverline.textContent = display.overline;
   ui.fullscreenRuleName.textContent = display.name;
   ui.fullscreenRuleDescription.textContent = display.description;
@@ -245,7 +300,10 @@ function drawCard(keepFullscreen = false) {
   const card = state.deck.pop();
   card.playerName = state.players[state.currentPlayerIndex] || `玩家 ${state.currentPlayerIndex + 1}`;
   state.current = card;
-  if (card.rank === "K") state.kingCount += 1;
+  if (card.rank === "K") {
+    state.kingCount += 1;
+    card.kingNumber = state.kingCount;
+  }
   if (card.rank === "2") state.ladyCount += 1;
 
   const rule = RULES[card.rank];

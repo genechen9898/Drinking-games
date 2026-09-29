@@ -232,26 +232,50 @@ h2 { margin-bottom: 0; font-size: 1.08rem; }
 .card-corner { display: flex; width: 40px; align-items: center; flex-direction: column; font-weight: 800; line-height: .95; }
 .card-rank { font-family: Georgia, serif; font-size: clamp(2rem, 8vw, 2.8rem); }
 .card-suit { margin-top: 5px; font-size: clamp(1.35rem, 5.5vw, 1.9rem); }
-.card-center { position: absolute; inset: 0; display: grid; place-items: center; font-size: clamp(5.6rem, 23vw, 8.2rem); text-align: center; }
+.card-center {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 64px 10px;
+  text-align: center;
+}
+.card-center-content {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+}
+.card-center-suit {
+  display: block;
+  font-size: clamp(5.2rem, 21vw, 7.6rem);
+  line-height: .82;
+}
 .card-center small {
   display: block;
-  max-width: 82%;
-  margin: -5px auto 0;
-  padding: 7px 11px;
+  width: max-content;
+  max-width: calc(100% - 8px);
+  margin: 0 auto;
+  padding: 8px 12px;
   border-radius: 999px;
   color: #344754;
   background: rgba(255, 254, 250, 0.94);
   box-shadow: 0 3px 12px rgba(52, 71, 84, 0.1);
   font-family: inherit;
-  font-size: clamp(1.25rem, 6vw, 1.8rem);
+  font-size: clamp(1.1rem, 5.2vw, 1.55rem);
   font-weight: 900;
   line-height: 1.15;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 .fullscreen-display-card .card-center small {
-  max-width: 86%;
+  max-width: calc(100% - 12px);
   padding: 9px 14px;
-  font-size: clamp(1.5rem, 7vw, 2.3rem);
+  font-size: clamp(1.4rem, 6.5vw, 2.1rem);
 }
 .card-corner.bottom { position: absolute; right: 13px; bottom: 13px; transform: rotate(180deg); }
 .fullscreen-tip { margin: 0; color: var(--ink-soft); font-size: .78rem; font-weight: 700; }
@@ -435,4 +459,76 @@ body.fullscreen-open { overflow: hidden; }
   .playing-card { height: clamp(290px, 45svh, 360px); }
   .card-stage { min-height: clamp(320px, 50svh, 400px); }
   .fullscreen-display-card { height: min(54svh, 460px); }
+}
+.fourth-king {
+  overflow: hidden;
+  color: #fff !important;
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      rgba(255, 255, 255, 0.22),
+      transparent 38%
+    ),
+    linear-gradient(145deg, #e6878d 0%, #c95f69 55%, #9f4550 100%);
+  box-shadow:
+    0 24px 50px rgba(159, 69, 80, 0.35),
+    0 4px 12px rgba(47, 67, 80, 0.18);
+}
+
+.fourth-king::before,
+.fourth-king::after {
+  content: "✦";
+  position: absolute;
+  color: rgba(255, 255, 255, 0.32);
+  font-size: 5rem;
+  transform: rotate(18deg);
+}
+
+.fourth-king::before {
+  top: 18%;
+  right: -10px;
+}
+
+.fourth-king::after {
+  bottom: 12%;
+  left: -8px;
+  font-size: 3.8rem;
+}
+
+.fourth-king .card-corner {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+}
+
+.king-cheers {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.king-cheers strong {
+  color: #fff;
+  font-size: clamp(2.6rem, 12vw, 4.2rem);
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-shadow: 0 4px 18px rgba(105, 36, 43, 0.3);
+  white-space: nowrap;
+}
+
+.king-cheers small {
+  margin-top: 14px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  color: #9f4550;
+  background: rgba(255, 255, 255, 0.92);
+  font-size: clamp(1rem, 4.5vw, 1.35rem);
+  font-weight: 900;
+  white-space: nowrap;
 }
